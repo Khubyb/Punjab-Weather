@@ -36,6 +36,14 @@ export default function WeatherMap({ city, onSelectCity }) {
   const [radarTile, setRadarTile] = useState(null);
   const [showRadar, setShowRadar] = useState(false);
 
+  const handleCitySelect = (c) => {
+    onSelectCity(c);
+    const heroSection = document.getElementById('home');
+    if (heroSection) {
+      heroSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   useEffect(() => {
     // RainViewer's public API needs no key and returns the latest radar frame path.
     fetch('https://api.rainviewer.com/public/weather-maps.json')
@@ -81,7 +89,7 @@ export default function WeatherMap({ city, onSelectCity }) {
                     color: '#fff',
                     cursor: 'pointer'
                   }}
-                  onClick={() => onSelectCity(c)}
+                  onClick={() => handleCitySelect(c)}
                 >
                   View weather
                 </button>

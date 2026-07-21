@@ -3,7 +3,7 @@ import { searchCities } from '../services/geocodingApi';
 import { debounce } from '../utils/helpers';
 import punjabCities from '../data/punjabCities';
 
-export default function SearchBar({ onSelectCity }) {
+export default function SearchBar({ onSelectCity, selectedCity }) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [highlighted, setHighlighted] = useState(-1);
@@ -15,6 +15,17 @@ export default function SearchBar({ onSelectCity }) {
       setHighlighted(-1);
     }, 280)
   ).current;
+
+  // Keep the search box in sync when a city is picked elsewhere (e.g. the map),
+  // so it reads as if the user had just searched for that city.
+  useEffect(() => {
+    if (selectedCity?.name && selectedCity.name !== query) {
+      setQuery(selectedCity.name);
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCity]);
 
   useEffect(() => {
     if (query.trim().length === 0) {

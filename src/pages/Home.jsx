@@ -34,7 +34,7 @@ export default function Home({ city, weather, airQuality, loading, error, select
             <h1 className="hero-title">
               Know the sky over <span>every city in Punjab</span>
             </h1>
-            <SearchBar onSelectCity={selectCity} />
+            <SearchBar onSelectCity={selectCity} selectedCity={city} />
           </div>
 
           {loading ? (
