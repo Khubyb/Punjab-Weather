@@ -82,7 +82,3 @@ Ships with 30+ major Punjab cities out of the box — Lahore, Faisalabad, Rawalp
 - The rain radar overlay is treated as an optional enhancement — if that API is briefly unavailable, the rest of the app keeps working.
 - The city search checks the built-in Punjab city list first, then falls back to live geocoding (filtered to Pakistan) for anything not already listed.
 - Dark mode is the default theme; the toggle in the navbar switches to light mode and remembers your choice.
-
-## 📄 License
-
-MIT
