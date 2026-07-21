@@ -1,62 +1,49 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import ThemeToggle from './ThemeToggle.jsx';
 
-/**
- * Sticky glass navbar with in-page section links and the
- * dark/light mode toggle.
- */
-export default function Navbar({ activeSection, onNavigate, isDark, onToggleTheme }) {
-  const [menuOpen, setMenuOpen] = useState(false);
+const LINKS = [
+  { href: '#home', label: 'Home' },
+  { href: '#weather', label: 'Weather' },
+  { href: '#forecast', label: 'Forecast' },
+  { href: '#map', label: 'Weather Map' },
+  { href: '#about', label: 'About' }
+];
 
-  const links = [
-    { id: "home", label: "Home" },
-    { id: "weather", label: "Weather" },
-    { id: "about", label: "About" },
-    { id: "developer", label: "Developer" },
-  ];
-
-  function handleNavigate(id) {
-    onNavigate(id);
-    setMenuOpen(false);
-  }
+export default function Navbar({ theme, onToggleTheme }) {
+  const [open, setOpen] = useState(false);
 
   return (
     <header className="navbar">
-      <div className="navbar-inner">
-        <div className="navbar-brand" onClick={() => handleNavigate("home")}>
-          <i className="bx bxs-cloud-rain navbar-logo-icon"></i>
-          <span>Punjab Weather Pro</span>
-        </div>
+      <div className="container navbar-inner">
+        <a href="#home" className="brand">
+          <span className="brand-mark">☀️</span>
+          Punjab Weather
+        </a>
 
-        <nav className={`navbar-links ${menuOpen ? "open" : ""}`}>
-          {links.map((link) => (
-            <button
-              key={link.id}
-              className={`navbar-link ${activeSection === link.id ? "active" : ""}`}
-              onClick={() => handleNavigate(link.id)}
-            >
-              {link.label}
-            </button>
-          ))}
+        <nav>
+          <ul className={`nav-links ${open ? 'open' : ''}`}>
+            {LINKS.map((link) => (
+              <li key={link.href}>
+                <a href={link.href} onClick={() => setOpen(false)}>
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
         </nav>
 
-        <div className="navbar-actions">
+        <div className="nav-right">
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
           <button
-            className="theme-toggle"
-            onClick={onToggleTheme}
-            aria-label="Toggle dark mode"
-            title="Toggle dark / light mode"
-          >
-            <i className={`bx ${isDark ? "bx-moon" : "bx-sun"}`}></i>
-          </button>
-          <button
-            className="navbar-burger"
-            onClick={() => setMenuOpen((v) => !v)}
+            className="nav-toggle"
             aria-label="Toggle navigation menu"
+            onClick={() => setOpen((o) => !o)}
           >
-            <i className={`bx ${menuOpen ? "bx-x" : "bx-menu"}`}></i>
+            {open ? '✕' : '☰'}
           </button>
         </div>
       </div>
+      <div className="truck-stripe" />
     </header>
   );
 }

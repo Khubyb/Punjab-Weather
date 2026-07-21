@@ -1,21 +1,20 @@
-import React from "react";
+import React from 'react';
 
-/**
- * Full-screen loading experience shown while the initial weather
- * fetch (default city) is in flight, and briefly on subsequent
- * searches for a consistent, premium feel.
- */
-export default function Loader() {
+export function Spinner({ label = 'Fetching live weather…' }) {
   return (
-    <div className="loader-screen" role="status" aria-live="polite">
-      <div className="loader-logo">
-        <i className="bx bx-sun loader-icon"></i>
-        <span className="loader-title">Punjab Weather Pro</span>
-      </div>
-      <div className="loader-bar-track">
-        <div className="loader-bar-fill"></div>
-      </div>
-      <p className="loader-subtext">Fetching the skies over Punjab…</p>
+    <div className="loader-wrap">
+      <div className="spinner" role="status" aria-label="Loading" />
+      <p>{label}</p>
+    </div>
+  );
+}
+
+export function SkeletonCards({ count = 6 }) {
+  return (
+    <div className="skeleton-grid">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="skeleton skeleton-card" />
+      ))}
     </div>
   );
 }

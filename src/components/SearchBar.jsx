@@ -1,109 +1,122 @@
-import React, { useMemo, useRef, useState } from "react";
-import PUNJAB_CITIES from "../data/punjabCities";
+import React, { useEffect, useRef, useState } from 'react';
+import { searchCities } from '../services/geocodingApi';
+import { debounce } from '../utils/helpers';
+import punjabCities from '../data/punjabCities';
 
-/**
- * Search input with live autocomplete restricted to Punjab, Pakistan
- * cities, plus a "use my location" button and quick access to the
- * user's recent search history.
- */
-export default function SearchBar({ onSearch, onUseLocation, history }) {
-  const [value, setValue] = useState("");
+export default function SearchBar({ onSelectCity }) {
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [highlighted, setHighlighted] = useState(-1);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(-1);
-  const inputRef = useRef(null);
+  const debouncedSearch = useRef(
+    debounce(async (q) => {
+      const results = await searchCities(q);
+      setSuggestions(results);
+      setHighlighted(-1);
+    }, 280)
+  ).current;
 
-  const suggestions = useMemo(() => {
-    if (!value.trim()) return [];
-    const query = value.trim().toLowerCase();
-    return PUNJAB_CITIES.filter((city) =>
-      city.toLowerCase().startsWith(query)
-    ).slice(0, 6);
-  }, [value]);
-
-  function submit(city) {
-    const chosen = city ?? value;
-    if (!chosen.trim()) return;
-    onSearch(chosen.trim());
-    setValue("");
-    setShowSuggestions(false);
-    setActiveIndex(-1);
-    inputRef.current?.blur();
-  }
-
-  function handleKeyDown(e) {
-    if (!showSuggestions || suggestions.length === 0) {
-      if (e.key === "Enter") submit();
+  useEffect(() => {
+    if (query.trim().length === 0) {
+      setSuggestions([]);
       return;
     }
-    if (e.key === "ArrowDown") {
+    debouncedSearch(query);
+  }, [query, debouncedSearch]);
+
+  const commit = (city) => {
+    if (!city) return;
+    onSelectCity(city);
+    setQuery(city.name);
+    setShowSuggestions(false);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setActiveIndex((i) => (i + 1) % suggestions.length);
-    } else if (e.key === "ArrowUp") {
+      setHighlighted((h) => Math.min(h + 1, suggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setActiveIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
-    } else if (e.key === "Enter") {
+      setHighlighted((h) => Math.max(h - 1, 0));
+    } else if (e.key === 'Enter') {
       e.preventDefault();
-      submit(activeIndex >= 0 ? suggestions[activeIndex] : value);
-    } else if (e.key === "Escape") {
+      if (highlighted >= 0 && suggestions[highlighted]) {
+        commit(suggestions[highlighted]);
+      } else if (suggestions.length > 0) {
+        commit(suggestions[0]);
+      } else {
+        // Fall back to an exact (case-insensitive) match against the full list
+        const exact = punjabCities.find(
+          (c) => c.name.toLowerCase() === query.trim().toLowerCase()
+        );
+        if (exact) commit(exact);
+      }
+    } else if (e.key === 'Escape') {
       setShowSuggestions(false);
     }
-  }
+  };
 
   return (
     <div className="search-wrap">
-      <div className="search-bar glass">
-        <i className="bx bx-search search-icon"></i>
+      <div className="search-box">
+        <span className="search-icon" aria-hidden="true">🔍</span>
         <input
-          ref={inputRef}
           type="text"
-          value={value}
-          placeholder="Search any city in Punjab… (e.g. Multan)"
+          placeholder="Search Lahore, Multan, Bahawalpur…"
+          value={query}
           onChange={(e) => {
-            setValue(e.target.value);
+            setQuery(e.target.value);
             setShowSuggestions(true);
-            setActiveIndex(-1);
           }}
           onFocus={() => setShowSuggestions(true)}
           onBlur={() => setTimeout(() => setShowSuggestions(false), 120)}
           onKeyDown={handleKeyDown}
           aria-label="Search for a city in Punjab"
+          aria-autocomplete="list"
         />
-        <button className="search-btn" onClick={() => submit()}>
+        {query.length > 0 && (
+          <button
+            type="button"
+            className="clear-btn"
+            aria-label="Clear search"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              setQuery('');
+              setSuggestions([]);
+              setShowSuggestions(false);
+            }}
+          >
+            ✕
+          </button>
+        )}
+        <button className="ripple" onClick={() => handleKeyDown({ key: 'Enter', preventDefault() {} })}>
           Search
-        </button>
-        <button
-          className="location-btn"
-          onClick={onUseLocation}
-          title="Use my current location"
-          aria-label="Use my current location"
-        >
-          <i className="bx bx-current-location"></i>
         </button>
       </div>
 
       {showSuggestions && suggestions.length > 0 && (
-        <ul className="suggestions glass">
-          {suggestions.map((city, i) => (
-            <li
-              key={city}
-              className={i === activeIndex ? "active" : ""}
-              onMouseDown={() => submit(city)}
+        <div className="search-suggestions" role="listbox">
+          {suggestions.map((s, i) => (
+            <button
+              key={`${s.name}-${i}`}
+              role="option"
+              aria-selected={highlighted === i}
+              className={highlighted === i ? 'highlighted' : ''}
+              onMouseDown={() => commit(s)}
             >
-              <i className="bx bx-map-pin"></i> {city}
-            </li>
+              <span>{s.name}</span>
+              <span aria-hidden="true">📍</span>
+            </button>
           ))}
-        </ul>
+        </div>
       )}
 
-      {showSuggestions && suggestions.length === 0 && history.length > 0 && !value && (
-        <ul className="suggestions glass">
-          <li className="suggestions-label">Recent searches</li>
-          {history.slice(0, 5).map((city) => (
-            <li key={city} onMouseDown={() => submit(city)}>
-              <i className="bx bx-history"></i> {city}
-            </li>
-          ))}
-        </ul>
+      {showSuggestions && query.trim().length > 0 && suggestions.length === 0 && (
+        <div className="search-suggestions">
+          <div style={{ padding: '12px 16px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            No matching Punjab city found.
+          </div>
+        </div>
       )}
     </div>
   );
